@@ -1,4 +1,4 @@
-import { Result, Ok, Err } from './'
+import { Err, Ok, Result } from './'
 
 export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
   private _promise: Promise<Result<T, E>>
@@ -8,15 +8,15 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
   }
 
   static fromSafePromise<T, E>(promise: Promise<T>): ResultAsync<T, E> {
-    const newPromise = promise.then((value: T) => new Ok<T, E>(value))
+    const newPromise = promise.then((value: T) => new Ok<T, never>(value))
 
     return new ResultAsync(newPromise)
   }
 
   static fromPromise<T, E>(promise: Promise<T>, errorFn: (e: unknown) => E): ResultAsync<T, E> {
     const newPromise = promise
-      .then((value: T) => new Ok<T, E>(value))
-      .catch((e) => new Err<T, E>(errorFn(e)))
+      .then((value: T) => new Ok<T, never>(value))
+      .catch((e) => new Err<never, E>(errorFn(e)))
 
     return new ResultAsync(newPromise)
   }
@@ -25,10 +25,10 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
     return new ResultAsync(
       this._promise.then(async (res: Result<T, E>) => {
         if (res.isErr()) {
-          return new Err<A, E>(res.error)
+          return new Err<never, E>(res.error)
         }
 
-        return new Ok<A, E>(await f(res.value))
+        return new Ok<A, never>(await f(res.value))
       }),
     )
   }
@@ -37,10 +37,10 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
     return new ResultAsync(
       this._promise.then(async (res: Result<T, E>) => {
         if (res.isOk()) {
-          return new Ok<T, U>(res.value)
+          return new Ok<T, never>(res.value)
         }
 
-        return new Err<T, U>(await f(res.error))
+        return new Err<never, U>(await f(res.error))
       }),
     )
   }
@@ -49,7 +49,7 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
     return new ResultAsync(
       this._promise.then((res) => {
         if (res.isErr()) {
-          return new Err<U, E>(res.error)
+          return new Err<never, E>(res.error)
         }
 
         const newValue = f(res.value)
@@ -66,7 +66,7 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
           return f(res.error)
         }
 
-        return new Ok<T, A>(res.value)
+        return new Ok<T, never>(res.value)
       }),
     )
   }
@@ -75,21 +75,21 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
     return this._promise.then((res) => res.match(ok, _err))
   }
 
-  unwrapOr(t: T): Promise<T> {
+  unwrapOr<DefaultValue extends unknown>(t: DefaultValue): Promise<DefaultValue> {
     return this._promise.then((res) => res.unwrapOr(t))
   }
 
   // Makes ResultAsync implement PromiseLike<Result>
   then<A, B>(
-    successCallback?: (res: Result<T, E>) => A | PromiseLike<A>,
+    successCallback?: (res: Result<T, never>) => A | PromiseLike<A>,
     failureCallback?: (reason: unknown) => B | PromiseLike<B>,
   ): PromiseLike<A | B> {
     return this._promise.then(successCallback, failureCallback)
   }
 }
 
-export const okAsync = <T, E>(value: T): ResultAsync<T, E> =>
-  new ResultAsync(Promise.resolve(new Ok<T, E>(value)))
+export const okAsync = <T, E extends never>(value: T): ResultAsync<T, E> =>
+  new ResultAsync(Promise.resolve(new Ok<T, never>(value)))
 
-export const errAsync = <T, E>(err: E): ResultAsync<T, E> =>
-  new ResultAsync(Promise.resolve(new Err<T, E>(err)))
+export const errAsync = <T extends never, E>(err: E): ResultAsync<T, E> =>
+  new ResultAsync(Promise.resolve(new Err<never, E>(err)))

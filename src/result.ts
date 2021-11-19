@@ -1,4 +1,4 @@
-import { ResultAsync, errAsync } from './'
+import { errAsync, ResultAsync } from './'
 import { createNeverThrowError, ErrorConfig } from './_internals/error'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -25,20 +25,20 @@ export namespace Result {
     }
   }
 }
-export type Result<T, E> = Ok<T, E> | Err<T, E>
+export type Result<T, E> = Ok<T, never> | Err<never, E>
 
-export const ok = <T, E>(value: T): Ok<T, E> => new Ok(value)
+export const ok = <T, E>(value: T): Ok<T, never> => new Ok(value)
 
-export const err = <T, E>(err: E): Err<T, E> => new Err(err)
+export const err = <T, E>(err: E): Err<never, E> => new Err(err)
 
-export class Ok<T, E> {
+export class Ok<T, E extends never> {
   constructor(readonly value: T) {}
 
   isOk(): this is Ok<T, E> {
     return true
   }
 
-  isErr(): this is Err<T, E> {
+  isErr(): this is Err<never, E> {
     return !this.isOk()
   }
 
@@ -54,7 +54,7 @@ export class Ok<T, E> {
   // add info on how this is really useful for converting a
   // Result<Result<T, E2>, E1>
   // into a Result<T, E2>
-  andThen<U>(f: (t: T) => Result<U, E>): Result<U, E> {
+  andThen<V, E, Res extends Result<V, E>>(f: (t: T) => Res): Res {
     return f(this.value)
   }
 
@@ -92,10 +92,10 @@ export class Ok<T, E> {
   }
 }
 
-export class Err<T, E> {
+export class Err<T extends never, E> {
   constructor(readonly error: E) {}
 
-  isOk(): this is Ok<T, E> {
+  isOk(): this is Ok<T, never> {
     return false
   }
 
@@ -113,7 +113,9 @@ export class Err<T, E> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  andThen<U>(_f: (t: T) => Result<U, E>): Result<U, E> {
+  andThen<U>(
+    _f: (t: E) => Result<never, E> | Result<U, never>,
+  ): Result<never, E> | Result<U, never> {
     return err(this.error)
   }
 
@@ -126,15 +128,15 @@ export class Err<T, E> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   asyncAndThen<U>(_f: (t: T) => ResultAsync<U, E>): ResultAsync<U, E> {
-    return errAsync<U, E>(this.error)
+    return errAsync<never, E>(this.error)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   asyncMap<U>(_f: (t: T) => Promise<U>): ResultAsync<U, E> {
-    return errAsync<U, E>(this.error)
+    return errAsync<never, E>(this.error)
   }
 
-  unwrapOr(v: T): T {
+  unwrapOr<V extends unknown>(v: V): V {
     return v
   }
 

@@ -1,66 +1,39 @@
-import { Result, ok, err, Ok, Err } from './result'
+import { err, Err, ok, Ok, Result } from './result'
 import { ResultAsync } from './result-async'
 
-/*
 // Given a list of Results, this extracts all the different `T` types from that list
-type ExtractOkTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends Result<infer U, unknown> ? U : never
+type ExtractOkTypes<T extends ResultsToCombine> = {
+  [Key in keyof T]: T[Key] extends ResultToCombine ? ExtractOkFromUnion<T[Key]> : never
 }
-*/
+
+// Given a list of Results, this extracts all the different `E` types from that list
+type ExtractErrTypes<T extends ResultsToCombine> = {
+  [Key in keyof T]: T[Key] extends ResultToCombine ? ExtractErrFromUnion<T[Key]> : never
+}
+
+// need to be separated generic type to run it for every element of union T separately
+type ExtractOkFromUnion<T extends ResultToCombine> = T extends Ok<infer V, never> // filter out "unknown" values
+  ? V extends unknown
+    ? V
+    : never
+  : never
+
+// need to be separated generic type to run it for every element of union T separately
+type ExtractErrFromUnion<T extends ResultToCombine> = T extends Err<never, infer E> // filter out "unknown" values
+  ? E extends unknown
+    ? E
+    : never
+  : never
 
 // Given a list of ResultAsyncs, this extracts all the different `T` types from that list
 type ExtractOkAsyncTypes<T extends readonly ResultAsync<unknown, unknown>[]> = {
   [idx in keyof T]: T[idx] extends ResultAsync<infer U, unknown> ? U : never
 }
 
-/*
-// Given a list of Results, this extracts all the different `E` types from that list
-type ExtractErrTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends Result<unknown, infer E> ? E : never
-}
-*/
-
 // Given a list of ResultAsyncs, this extracts all the different `E` types from that list
-type ExtractErrAsyncTypes<T extends readonly ResultAsync<unknown, unknown>[]> = {
+type ExtractErrAsyncTypes<T extends readonly ResultAsync<never, unknown>[]> = {
   [idx in keyof T]: T[idx] extends ResultAsync<unknown, infer E> ? E : never
 }
-
-
-// Given a list of Results, this extracts all the different `T` types from that list
-type ExtractOkTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [Key in keyof T]: T[Key] extends Result<unknown, unknown>
-    ? ExtractOkFromUnion<T[Key]>
-    : never;
-};
-
-// Given a list of Results, this extracts all the different `E` types from that list
-type ExtractErrTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [Key in keyof T]: T[Key] extends Result<unknown, unknown>
-    ? ExtractErrFromUnion<T[Key]>
-    : never;
-};
-
-// need to be separated generic type to run it for every element of union T separately
-type ExtractOkFromUnion<T extends Result<unknown, unknown>> = T extends Ok<
-  infer V,
-  unknown
-> // filter out "unknown" values
-  ? V extends {}
-    ? V
-    : never
-  : never;
-
-// need to be separated generic type to run it for every element of union T separately
-type ExtractErrFromUnion<T extends Result<unknown, unknown>> = T extends Err<
-  unknown,
-  infer E
-> // filter out "unknown" values
-  ? E extends {}
-    ? E
-    : never
-  : never;
-
-
 
 /**
  * Short circuits on the FIRST Err value that we find
@@ -91,10 +64,14 @@ export function combine<T extends readonly Result<unknown, unknown>[]>(
   resultList: T,
 ): Result<ExtractOkTypes<T>, ExtractErrTypes<T>[number]>
 */
+type UnpackNeverArray<T> = T extends readonly never[] ? never : T
+type ResultToCombine = Result<never, unknown> | Result<unknown, never>
+// rename this to be more readable, ResultArrToCombine
+type ResultsToCombine = readonly ResultToCombine[]
 
-export function combine<T extends readonly Result<unknown, unknown>[]>(
-  results: [...T]
-): Result<ExtractOkTypes<T>, ExtractErrTypes<T>[number]>;
+export function combine<T extends ResultsToCombine>(
+  results: [...T],
+): Result<UnpackNeverArray<ExtractOkTypes<T>>, ExtractErrTypes<T>[number]>
 
 export function combine<T extends readonly ResultAsync<unknown, unknown>[]>(
   asyncResultList: T,
@@ -108,6 +85,3 @@ export function combine(list: any): any {
     return combineResultList(list)
   }
 }
-
-
-

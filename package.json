@@ -7,6 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest && npm run test-types",
+    "test:watch": "jest --watch",
     "test-types": "tsc --noEmit ./tests/typecheck-tests.ts",
     "lint": "eslint ./src --ext .ts",
     "format": "prettier --write 'src/**/*.ts?(x)' && npm run lint -- --fix",

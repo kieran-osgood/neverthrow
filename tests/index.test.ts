@@ -1,4 +1,4 @@
-import { ok, err, Ok, Err, Result, ResultAsync, okAsync, errAsync } from '../src'
+import { err, Err, errAsync, ok, Ok, okAsync, Result, ResultAsync } from '../src'
 import { combine } from '../src/utils'
 
 describe('Result.Ok', () => {
@@ -78,9 +78,7 @@ describe('Result.Ok', () => {
 
       expect(flattened.isOk()).toBe(false)
 
-      const nextFn = jest.fn((_val) => ok('noop'))
-
-      flattened.andThen(nextFn)
+      const nextFn = jest.fn((_val: number) => ok(8))
 
       expect(nextFn).not.toHaveBeenCalled()
     })
@@ -219,7 +217,7 @@ describe('Result.Err', () => {
   it('Skips over andThen', () => {
     const errVal = err('Yolo')
 
-    const mapper = jest.fn((_val) => ok<string, string>('yooyo'))
+    const mapper = jest.fn((_val) => ok<string, never>('yooyo'))
 
     const hopefullyNotFlattened = errVal.andThen(mapper)
 
@@ -231,7 +229,7 @@ describe('Result.Err', () => {
   it('Transforms error into ResultAsync within `asyncAndThen`', async () => {
     const errVal = err('Yolo')
 
-    const asyncMapper = jest.fn((_val) => okAsync<string, string>('yooyo'))
+    const asyncMapper = jest.fn((_val) => okAsync<string, never>('yooyo'))
 
     const hopefullyNotFlattened = errVal.asyncAndThen(asyncMapper)
 
@@ -375,15 +373,15 @@ describe('Utils', () => {
       })
 
       it('Combines heterogeneous lists', () => {
-        type HeterogenousList = [ Result<string, string>, Result<number, number>, Result<boolean, boolean> ]
-
-        const heterogenousList: HeterogenousList = [
-          ok('Yooooo'),
-          ok(123),
-          ok(true),
+        type HeterogenousList = [
+          Result<string, string>,
+          Result<number, number>,
+          Result<boolean, boolean>,
         ]
 
-        type ExpecteResult = Result<[ string, number, boolean ], string | number | boolean>
+        const heterogenousList: HeterogenousList = [ok('Yooooo'), ok(123), ok(true)]
+
+        type ExpecteResult = Result<[string, number, boolean], string | number | boolean>
 
         const result: ExpecteResult = combine(heterogenousList)
 
@@ -396,7 +394,7 @@ describe('Utils', () => {
         const asyncResultList = [okAsync(123), okAsync(456), okAsync(789)]
 
         const resultAsync: ResultAsync<number[], unknown> = combine(asyncResultList)
-        
+
         expect(resultAsync).toBeInstanceOf(ResultAsync)
 
         const result = await combine(asyncResultList)
@@ -420,17 +418,17 @@ describe('Utils', () => {
       })
 
       it('Combines heterogeneous lists', async () => {
-        type HeterogenousList = [ ResultAsync<string, string>, ResultAsync<number, number>, ResultAsync<boolean, boolean> ]
-
-        const heterogenousList: HeterogenousList = [
-          okAsync('Yooooo'),
-          okAsync(123),
-          okAsync(true),
+        type HeterogenousList = [
+          ResultAsync<string, string>,
+          ResultAsync<number, number>,
+          ResultAsync<boolean, boolean>,
         ]
 
-        type ExpecteResult = Result<[ string, number, boolean ], string | number | boolean>
+        const heterogenousList: HeterogenousList = [okAsync('Yooooo'), okAsync(123), okAsync(true)]
 
-        const result: ExpecteResult= await combine(heterogenousList)
+        type ExpecteResult = Result<[string, number, boolean], string | number | boolean>
+
+        const result: ExpecteResult = await combine(heterogenousList)
 
         expect(result._unsafeUnwrap()).toEqual(['Yooooo', 123, true])
       })
@@ -485,7 +483,7 @@ describe('ResultAsync', () => {
     })
 
     it('Can be used with Promise.all', async () => {
-      const allResult = await Promise.all([okAsync<string, Error>('1')])
+      const allResult = await Promise.all([okAsync<string, never>('1')])
 
       expect(allResult).toHaveLength(1)
       expect(allResult[0]).toBeInstanceOf(Ok)
@@ -529,7 +527,7 @@ describe('ResultAsync', () => {
     })
 
     it('Skips an error', async () => {
-      const asyncErr = errAsync<number, string>('Wrong format')
+      const asyncErr = errAsync<never, string>('Wrong format')
 
       const mapSyncFn = jest.fn((number) => number.toString())
 
@@ -629,7 +627,7 @@ describe('ResultAsync', () => {
     })
 
     it('Skips an Error', async () => {
-      const asyncVal = errAsync<string, string>('Wrong format')
+      const asyncVal = errAsync<never, string>('Wrong format')
 
       const andThenResultFn = jest.fn(() => ok<string, string>('good'))
 
@@ -648,8 +646,7 @@ describe('ResultAsync', () => {
   describe('orElse', () => {
     it('Skips orElse on an Ok value', async () => {
       const okVal = okAsync(12)
-      const errorCallback = jest.fn((_errVal) => errAsync<number, string>('It is now a string'))
-
+      const errorCallback = jest.fn((_errVal) => errAsync<never, string>('It is now a string'))
 
       const result = await okVal.orElse(errorCallback)
 
