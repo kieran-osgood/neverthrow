@@ -10,7 +10,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'Combines two equal error types (native scalar types)') {
       type Expectation = Result<unknown, string>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .andThen((val) => err('yoooooo dude' + val))
     });
 
@@ -22,8 +22,8 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
 
       type Expectation = Result<string, MyError>
 
-      const result: Expectation = ok<number, MyError>(123)
-        .andThen((val) => err<string, MyError>({ stack: '/blah', code: 500 }))
+      const result: Expectation = ok<number, never>(123)
+        .andThen((val) => err<never, MyError>({ stack: '/blah', code: 500 }))
     });
 
     (function it(_ = 'Creates a union of error types for disjoint types') {
@@ -34,14 +34,14 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
 
       type Expectation = Result<string, MyError | string[]>
 
-      const result: Expectation = ok<number, MyError>(123)
-        .andThen((val) => err<string, string[]>(['oh nooooo']))
+      const result: Expectation = ok<number, never>(123)
+        .andThen((val) => err<never, string[]>(['oh nooooo']))
     });
 
     (function it(_ = 'Infers error type when returning disjoint types (native scalar types)') {
       type Expectation = Result<unknown, string | number | boolean>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .andThen((val) => {
           switch (val) {
             case 1:
@@ -61,7 +61,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
       }
       type Expectation = Result<unknown, string | number | MyError>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .andThen((val) => {
           switch (val) {
             case 1:
@@ -77,7 +77,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'Infers new ok type when returning both Ok and Err (same as initial)') {
       type Expectation = Result<number, unknown>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .andThen((val) => {
           switch (val) {
             case 1:
@@ -89,7 +89,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     });
 
     (function it(_ = 'Infers new ok type when returning both Ok and Err (different from initial)') {
-      const initial = ok<number, string>(123)
+      const initial = ok<number, never>(123)
       type Expectation = Result<string, unknown>
 
       const result: Expectation = initial
@@ -110,7 +110,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
       }
       type Expectation = Result<unknown, string | number | MyError>
   
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .andThen((val) => {
           switch (val) {
             case 1:
@@ -136,7 +136,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'the type of the argument is the error type of the result') {
       type Expectation = string
 
-      const result = ok<number, string>(123)
+      const result = ok<number, never>(123)
         .orElse((val: Expectation) => {
           switch (val) {
             case '2':
@@ -151,7 +151,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'infers the err return type with multiple returns (same type) ') {
       type Expectation = Result<number, number>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .orElse((val) => {
           switch (val) {
             case '2':
@@ -165,7 +165,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'infers the err return type with multiple returns (different type) ') {
       type Expectation = Result<number, number | string>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .orElse((val) => {
           switch (val) {
             case '2':
@@ -179,7 +179,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'infers ok and err return types with multiple returns ') {
       type Expectation = Result<number, number | string>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .orElse((val) => {
           switch (val) {
             case '1':
@@ -195,7 +195,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'allows specifying the E and T types explicitly') {
       type Expectation = Result<'yo', string>
 
-      const result: Expectation = ok<'yo', number>('yo').orElse<string>(val => {
+      const result: Expectation = ok<'yo', never>('yo').orElse<string>(val => {
         return err('yo')
       })
     });
@@ -205,7 +205,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_ = 'Combines two equal error types (native scalar types)') {
       type Expectation = ResultAsync<unknown, string>
 
-      const result: Expectation = ok<number, string>(123)
+      const result: Expectation = ok<number, never>(123)
         .asyncAndThen((val) => errAsync('yoooooo dude' + val))
     });
 
@@ -217,7 +217,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
 
       type Expectation = ResultAsync<string, MyError>
 
-      const result: Expectation = ok<number, MyError>(123)
+      const result: Expectation = ok<number, never>(123)
         .asyncAndThen((val) => errAsync<string, MyError>({ stack: '/blah', code: 500 }))
     });
 
@@ -229,7 +229,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
 
       type Expectation = ResultAsync<string, MyError | string[]>
 
-      const result: Expectation = ok<number, MyError>(123)
+      const result: Expectation = ok<number, never>(123)
         .asyncAndThen((val) => errAsync<string, string[]>(['oh nooooo']))
     });
   });
@@ -254,7 +254,7 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
       type Expectation = ResultAsync<string, MyError>
 
       const result: Expectation = okAsync<number, MyError>(123)
-        .andThen((val) => err<string, MyError>({ stack: '/blah', code: 500 }))
+        .andThen((val) => err<never, MyError>({ stack: '/blah', code: 500 }))
     });
 
     (function it(_ = 'Creates a union of error types for disjoint types') {
@@ -263,10 +263,10 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
         code: number
       }
 
-      type Expectation = ResultAsync<string, MyError | string[]>
+      type Expectation = ResultAsync<number, MyError | string[]>
 
       const result: Expectation = okAsync<number, MyError>(123)
-        .andThen((val) => err<string, string[]>(['oh nooooo']))
+        .andThen((val) => err<never, string[]>(['oh nooooo']))
     });
 
     (function describe(_ = 'when returning Result types') {
@@ -343,16 +343,17 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
         type Expectation = ResultAsync<unknown, string | number | MyError>
     
         const result: Expectation = okAsync<number, string>(123)
-          .andThen((val) => {
-            switch (val) {
-              case 1:
-                return err('yoooooo dude' + val)
-              case 2:
-                return ok(123)
-              default:
-                return err({ stack: '/blah', code: 500 })
-            }
-          })
+        .andThen((val) => {
+          switch (val) {
+            case 1:
+            return err('yoooooo dude' + val)
+            case 2:
+            return ok(123)
+            default:
+            return err({ stack: '/blah', code: 500 })
+          }
+        })
+        console.log('result: ', result);
       });
     });
 
@@ -396,6 +397,8 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
       (function it(_ = 'Infers new ok type when returning both Ok and Err (same as initial)') {
         type Expectation = ResultAsync<number, unknown>
   
+        const result1 = okAsync<number, string>(123)
+
         const result: Expectation = okAsync<number, string>(123)
           .andThen((val) => {
             switch (val) {
@@ -545,9 +548,9 @@ import { combine, err, errAsync, ok, okAsync, Result, ResultAsync } from '../src
     (function it(_= 'does not contain `unknown` values') {
       
       type ListType
-        = Result<number, unknown>
-        | Result<unknown, string>
-        | Result<boolean, unknown>
+        = Array<Result<number, never>
+        | Result<never, string>
+        | Result<boolean, never>>
       
 
       // this test fails if I provide the above anotation

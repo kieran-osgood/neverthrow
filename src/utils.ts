@@ -1,31 +1,61 @@
-import { Result, ok, err } from './result'
+import {
+  AsyncResultOptions,
+  AsyncResultOptionsArray,
+  err,
+  Err,
+  ok,
+  Ok,
+  Result,
+  ResultOptions,
+  ResultOptionsArray,
+} from './result'
 import { ResultAsync } from './result-async'
 
 // Given a list of Results, this extracts all the different `T` types from that list
-type ExtractOkTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends Result<infer U, unknown> ? U : never
+export type ExtractOkTypes<T extends ResultOptionsArray> = {
+  [Key in keyof T]: T[Key] extends ResultOptions ? ExtractOkFromUnion<T[Key]> : never
 }
+
+// need to be separated generic type to run it for every element of union T separately
+export type ExtractOkFromUnion<T extends ResultOptions> = T extends Ok<infer V, never> // filter out "unknown" values
+  ? V extends unknown
+    ? V
+    : never
+  : never
 
 // Given a list of ResultAsyncs, this extracts all the different `T` types from that list
-type ExtractOkAsyncTypes<T extends readonly ResultAsync<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends ResultAsync<infer U, unknown> ? U : never
+export type ExtractOkAsyncTypes<T extends AsyncResultOptionsArray> = {
+  [Key in keyof T]: T[Key] extends AsyncResultOptions ? AsyncExtractOkFromUnion<T[Key]> : never
 }
+// need to be separated generic type to run it for every element of union T separately
+export type AsyncExtractOkFromUnion<T extends AsyncResultOptions> = T extends Ok<infer V, never> // filter out "unknown" values
+  ? V extends unknown
+    ? V
+    : never
+  : never
 
 // Given a list of Results, this extracts all the different `E` types from that list
-type ExtractErrTypes<T extends readonly Result<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends Result<unknown, infer E> ? E : never
+export type ExtractErrTypes<T extends ResultOptionsArray> = {
+  [Key in keyof T]: T[Key] extends ResultOptions ? ExtractErrFromUnion<T[Key]> : never
 }
+// need to be separated generic type to run it for every element of union T separately
+export type ExtractErrFromUnion<T extends ResultOptions> = T extends Err<never, infer E> // filter out "unknown" values
+  ? E extends unknown
+    ? E
+    : never
+  : never
 
 // Given a list of ResultAsyncs, this extracts all the different `E` types from that list
-type ExtractErrAsyncTypes<T extends readonly ResultAsync<unknown, unknown>[]> = {
-  [idx in keyof T]: T[idx] extends ResultAsync<unknown, infer E> ? E : never
+export type ExtractErrAsyncTypes<T extends AsyncResultOptionsArray> = {
+  [idx in keyof T]: T[idx] extends AsyncResultOptions ? AsyncExtractErrFromUnion<T[idx]> : never
 }
 
-export type InferOkTypes<R> = R extends Result<infer T, unknown> ? T : never
-export type InferErrTypes<R> = R extends Result<unknown, infer E> ? E : never
-
-export type InferAsyncOkTypes<R> = R extends ResultAsync<infer T, unknown> ? T : never
-export type InferAsyncErrTypes<R> = R extends ResultAsync<unknown, infer E> ? E : never
+// need to be separated generic type to run it for every element of union T separately
+export type AsyncExtractErrFromUnion<T extends AsyncResultOptions> = T extends Err<never, infer E> // filter out "unknown" values
+  ? E extends unknown
+    ? E
+    : never
+  : never
 
 const appendValueToEndOfList = <T>(value: T) => (list: T[]): T[] => {
   // need to wrap `value` inside of an array in order to prevent
@@ -65,11 +95,11 @@ const combineResultAsyncList = <T, E>(asyncResultList: ResultAsync<T, E>[]): Res
     combineResultList,
   ) as ResultAsync<T[], E>
 
-export function combine<T extends readonly Result<unknown, unknown>[]>(
+export function combine<T extends ResultOptionsArray>(
   resultList: T,
 ): Result<ExtractOkTypes<T>, ExtractErrTypes<T>[number]>
 
-export function combine<T extends readonly ResultAsync<unknown, unknown>[]>(
+export function combine<T extends ResultOptionsArray>(
   asyncResultList: T,
 ): ResultAsync<ExtractOkAsyncTypes<T>, ExtractErrAsyncTypes<T>[number]>
 
@@ -105,11 +135,11 @@ const combineResultAsyncListWithAllErrors = <T, E>(
     combineResultListWithAllErrors,
   ) as ResultAsync<T[], E[]>
 
-export function combineWithAllErrors<T extends readonly Result<unknown, unknown>[]>(
+export function combineWithAllErrors<T extends ResultOptionsArray>(
   resultList: T,
 ): Result<ExtractOkTypes<T>, ExtractErrTypes<T>[number][]>
 
-export function combineWithAllErrors<T extends readonly ResultAsync<unknown, unknown>[]>(
+export function combineWithAllErrors<T extends ResultOptionsArray>(
   asyncResultList: T,
 ): ResultAsync<ExtractOkAsyncTypes<T>, ExtractErrAsyncTypes<T>[number][]>
 
